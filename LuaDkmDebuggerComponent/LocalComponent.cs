@@ -1389,7 +1389,7 @@ namespace LuaDkmDebuggerComponent
 
             string winSourcePath = source.Replace('/', '\\');
 
-            try
+            /*try
             {
                 if (processData.filePathResolveMap.ContainsKey(winSourcePath))
                 {
@@ -1405,7 +1405,7 @@ namespace LuaDkmDebuggerComponent
             catch (Exception)
             {
                 log.Error($"Failed to check config paths for {winSourcePath}");
-            }
+            }*/
 
             if (filePath == null)
             {
