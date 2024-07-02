@@ -1,0 +1,53 @@
+name: Main Workflow
+
+on:
+  push:
+  pull_request:
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    if: "contains(github.event.head_commit.message, '[ci build]') || github.event_name == 'release'"
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        Configuration: [Release]
+        Platform: [x64]
+    steps:
+    - uses: actions/checkout@v4.1.7
+      with:
+        fetch-depth: 0
+
+    - name: Add nuget to PATH
+      uses: nuget/setup-nuget@v2
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Nuget Restore
+      run: nuget restore
+
+    - name: MSBuild
+      shell: cmd
+      run: |
+        msbuild LuaDkmDebugger17.sln /t:Rebuild /p:Configuration=${{ matrix.Configuration }} /p:Platform=${{ matrix.Platform }} /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
+
+    - name: Upload OGSR artifact
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: LuaDkmDebugger17.vsix
+        path: .\LuaDkmDebugger17\bin\${{ matrix.Configuration }}\LuaDkmDebugger17.vsix
+
+    - name: Upload release asset
+      if: github.event_name == 'release'
+      uses: Czuz/upload-release-asset@v1.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: .\LuaDkmDebugger17\bin\${{ matrix.Configuration }}\LuaDkmDebugger17.vsix
+        asset_name: LuaDkmDebugger17.vsix
+        asset_content_type: application/zip
